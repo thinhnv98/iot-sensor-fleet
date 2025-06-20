@@ -106,18 +106,9 @@ func NewProducer(config ProducerConfig) (*Producer, error) {
 func (p *Producer) SendMessage(key, value []byte) {
 	startTime := time.Now()
 
-	// Create a message struct
-	message := struct {
-		Key   []byte `json:"key"`
-		Value []byte `json:"value"`
-	}{
-		Key:   key,
-		Value: value,
-	}
-
 	// Publish the message
 	ctx := context.Background()
-	err := p.publisher.Publish(ctx, message)
+	err := p.publisher.Publish(ctx, key, value)
 
 	// Update metrics
 	if p.metrics != nil {
@@ -135,18 +126,12 @@ func (p *Producer) SendMessage(key, value []byte) {
 func (p *Producer) SendMessageWithKey(key string, value []byte) {
 	startTime := time.Now()
 
-	// Create a message struct
-	message := struct {
-		Key   string `json:"key"`
-		Value []byte `json:"value"`
-	}{
-		Key:   key,
-		Value: value,
-	}
+	// Convert string key to []byte
+	keyBytes := []byte(key)
 
 	// Publish the message
 	ctx := context.Background()
-	err := p.publisher.Publish(ctx, message)
+	err := p.publisher.Publish(ctx, keyBytes, value)
 
 	// Update metrics
 	if p.metrics != nil {

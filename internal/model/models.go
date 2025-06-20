@@ -3,12 +3,8 @@ package model
 import (
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
-	"sync"
 
 	"github.com/google/uuid"
-	"github.com/riferrei/srclient"
 )
 
 // SensorReading represents a reading from an IoT sensor
@@ -28,70 +24,9 @@ type SensorAlert struct {
 	Humidity    float32 `json:"humidity"`
 }
 
-// Schema registry client and schema caches
-var (
-	schemaRegistryClient *srclient.SchemaRegistryClient
-	readingSchemaOnce    sync.Once
-	readingSchema        *srclient.Schema
-	alertSchemaOnce      sync.Once
-	alertSchema          *srclient.Schema
-)
-
-// InitSchemaRegistry initializes the schema registry client
+// InitSchemaRegistry is kept for backward compatibility but does nothing
 func InitSchemaRegistry(url string) {
-	schemaRegistryClient = srclient.CreateSchemaRegistryClient(url)
-}
-
-// GetSensorReadingSchema returns the schema for sensor readings
-func GetSensorReadingSchema() (*srclient.Schema, error) {
-	var err error
-	readingSchemaOnce.Do(func() {
- 	// Load schema from file
- 	schemaPath := filepath.Join("internal", "model", "sensor_reading.avsc")
- 	schemaBytes, readErr := os.ReadFile(schemaPath)
-		if readErr != nil {
-			err = fmt.Errorf("failed to read sensor reading schema: %w", readErr)
-			return
-		}
-
-		// Register schema with Schema Registry
-		readingSchema, err = schemaRegistryClient.CreateSchema("sensor.raw", string(schemaBytes), srclient.Avro)
-		if err != nil {
-			err = fmt.Errorf("failed to register sensor reading schema: %w", err)
-			return
-		}
-	})
-
-	if err != nil {
-		return nil, err
-	}
-	return readingSchema, nil
-}
-
-// GetSensorAlertSchema returns the schema for sensor alerts
-func GetSensorAlertSchema() (*srclient.Schema, error) {
-	var err error
-	alertSchemaOnce.Do(func() {
- 	// Load schema from file
- 	schemaPath := filepath.Join("internal", "model", "sensor_alert.avsc")
- 	schemaBytes, readErr := os.ReadFile(schemaPath)
-		if readErr != nil {
-			err = fmt.Errorf("failed to read sensor alert schema: %w", readErr)
-			return
-		}
-
-		// Register schema with Schema Registry
-		alertSchema, err = schemaRegistryClient.CreateSchema("sensor.alert", string(schemaBytes), srclient.Avro)
-		if err != nil {
-			err = fmt.Errorf("failed to register sensor alert schema: %w", err)
-			return
-		}
-	})
-
-	if err != nil {
-		return nil, err
-	}
-	return alertSchema, nil
+	// No-op in JSON implementation
 }
 
 // NewSensorReading creates a new sensor reading with a random UUID
@@ -115,103 +50,39 @@ func NewSensorAlert(reading *SensorReading, reason string) *SensorAlert {
 	}
 }
 
-// SerializeSensorReading serializes a sensor reading to Avro format
+// SerializeSensorReading serializes a sensor reading to JSON format
 func SerializeSensorReading(reading *SensorReading) ([]byte, error) {
-	schema, err := GetSensorReadingSchema()
-	if err != nil {
-		return nil, err
-	}
-
 	jsonData, err := json.Marshal(reading)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal sensor reading to JSON: %w", err)
 	}
-
-	native, _, err := schema.Codec().NativeFromTextual(jsonData)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert JSON to native: %w", err)
-	}
-
-	binary, err := schema.Codec().BinaryFromNative(nil, native)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert native to binary: %w", err)
-	}
-
-	return binary, nil
+	return jsonData, nil
 }
 
-// DeserializeSensorReading deserializes Avro data to a sensor reading
+// DeserializeSensorReading deserializes JSON data to a sensor reading
 func DeserializeSensorReading(data []byte) (*SensorReading, error) {
-	schema, err := GetSensorReadingSchema()
-	if err != nil {
-		return nil, err
-	}
-
-	native, _, err := schema.Codec().NativeFromBinary(data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert binary to native: %w", err)
-	}
-
-	jsonData, err := schema.Codec().TextualFromNative(nil, native)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert native to JSON: %w", err)
-	}
-
 	var reading SensorReading
-	if err := json.Unmarshal(jsonData, &reading); err != nil {
+	if err := json.Unmarshal(data, &reading); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal JSON to sensor reading: %w", err)
 	}
-
 	return &reading, nil
 }
 
-// SerializeSensorAlert serializes a sensor alert to Avro format
+// SerializeSensorAlert serializes a sensor alert to JSON format
 func SerializeSensorAlert(alert *SensorAlert) ([]byte, error) {
-	schema, err := GetSensorAlertSchema()
-	if err != nil {
-		return nil, err
-	}
-
 	jsonData, err := json.Marshal(alert)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal sensor alert to JSON: %w", err)
 	}
-
-	native, _, err := schema.Codec().NativeFromTextual(jsonData)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert JSON to native: %w", err)
-	}
-
-	binary, err := schema.Codec().BinaryFromNative(nil, native)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert native to binary: %w", err)
-	}
-
-	return binary, nil
+	return jsonData, nil
 }
 
-// DeserializeSensorAlert deserializes Avro data to a sensor alert
+// DeserializeSensorAlert deserializes JSON data to a sensor alert
 func DeserializeSensorAlert(data []byte) (*SensorAlert, error) {
-	schema, err := GetSensorAlertSchema()
-	if err != nil {
-		return nil, err
-	}
-
-	native, _, err := schema.Codec().NativeFromBinary(data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert binary to native: %w", err)
-	}
-
-	jsonData, err := schema.Codec().TextualFromNative(nil, native)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert native to JSON: %w", err)
-	}
-
 	var alert SensorAlert
-	if err := json.Unmarshal(jsonData, &alert); err != nil {
+	if err := json.Unmarshal(data, &alert); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal JSON to sensor alert: %w", err)
 	}
-
 	return &alert, nil
 }
 

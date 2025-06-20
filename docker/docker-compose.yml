@@ -48,7 +48,7 @@ services:
       start_period: 10s
       timeout: 10s
 
-  # Schema Registry
+  # Schema Registry (kept for compatibility with existing services)
   schema-registry:
     image: confluentinc/cp-schema-registry:7.5.0
     hostname: schema-registry
@@ -94,8 +94,8 @@ services:
       CONNECT_STATUS_STORAGE_TOPIC: docker-connect-status
       CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
       CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
-      CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
-      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
       CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"
       CONNECT_LOG4J_LOGGERS: org.apache.zookeeper=ERROR,org.I0Itec.zkclient=ERROR,org.reflections=ERROR
     command:
@@ -129,8 +129,8 @@ services:
             "pk.mode": "none",
             "table.name.format": "sensor_readings",
             "key.converter": "org.apache.kafka.connect.storage.StringConverter",
-            "value.converter": "io.confluent.connect.avro.AvroConverter",
-            "value.converter.schema.registry.url": "http://schema-registry:8081"
+            "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+            "value.converter.schemas.enable": "false"
           }
         }'
         # Elasticsearch Sink
@@ -155,9 +155,10 @@ services:
             "linger.ms": "1000",
             "max.retries": "5",
             "retry.backoff.ms": "1000",
+            "topics.index.map": "sensor.raw:sensor_readings",
             "key.converter": "org.apache.kafka.connect.storage.StringConverter",
-            "value.converter": "io.confluent.connect.avro.AvroConverter",
-            "value.converter.schema.registry.url": "http://schema-registry:8081"
+            "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+            "value.converter.schemas.enable": "false"
           }
         }'
         # S3 Sink (MinIO)
@@ -172,12 +173,12 @@ services:
             "s3.part.size": "5242880",
             "flush.size": "1000",
             "storage.class": "io.confluent.connect.s3.storage.S3Storage",
-            "format.class": "io.confluent.connect.s3.format.avro.AvroFormat",
+            "format.class": "io.confluent.connect.s3.format.json.JsonFormat",
             "schema.compatibility": "NONE",
             "partitioner.class": "io.confluent.connect.storage.partitioner.DefaultPartitioner",
             "key.converter": "org.apache.kafka.connect.storage.StringConverter",
-            "value.converter": "io.confluent.connect.avro.AvroConverter",
-            "value.converter.schema.registry.url": "http://schema-registry:8081",
+            "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+            "value.converter.schemas.enable": "false",
             "s3.credentials.provider.class": "com.amazonaws.auth.DefaultAWSCredentialsProviderChain",
             "aws.access.key.id": "minioadmin",
             "aws.secret.access.key": "minioadmin",
@@ -248,10 +249,11 @@ services:
     volumes:
       - minio-data:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   # MinIO Setup (create bucket)
   minio-setup:
@@ -261,9 +263,9 @@ services:
         condition: service_healthy
     entrypoint: >
       /bin/sh -c "
-      /usr/bin/mc config host add myminio http://minio:9000 minioadmin minioadmin;
-      /usr/bin/mc mb myminio/sensor-cold;
-      exit 0;
+      set -e;
+      /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin;
+      /usr/bin/mc mb myminio/sensor-cold || echo 'Bucket already exists';
       "
 
   # Prometheus

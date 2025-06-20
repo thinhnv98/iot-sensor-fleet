@@ -2,10 +2,8 @@ package kafka
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/IBM/sarama"
-	"github.com/google/uuid"
 	"log"
 	"math/rand"
 	"time"
@@ -13,7 +11,7 @@ import (
 
 // IPublisher defines the interface for a Kafka publisher
 type IPublisher interface {
-	Publish(ctx context.Context, message interface{}) error
+	Publish(ctx context.Context, key, value []byte) error
 	Stop()
 }
 
@@ -55,18 +53,12 @@ func NewKafkaPublisher(brokers []string, topic string, opts ...OptionFunc) (IPub
 }
 
 // Publish sends a message to Kafka with retry logic
-func (p *kafkaPublisher) Publish(ctx context.Context, message interface{}) error {
-	// Marshal message to JSON
-	payload, err := json.Marshal(message)
-	if err != nil {
-		return fmt.Errorf("failed to marshal message: %w", err)
-	}
-
-	// Create producer message
+func (p *kafkaPublisher) Publish(ctx context.Context, key, value []byte) error {
+	// Create producer message with default topic and provided key and value
 	msg := &sarama.ProducerMessage{
 		Topic: p.topic,
-		Key:   sarama.StringEncoder(uuid.New().String()),
-		Value: sarama.ByteEncoder(payload),
+		Key:   sarama.ByteEncoder(key),
+		Value: sarama.ByteEncoder(value),
 	}
 
 	// Simple retry mechanism with exponential backoff

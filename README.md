@@ -17,7 +17,7 @@ A complete, runnable Go project that simulates an IoT environment using Apache K
 ┌───────────────┐    produce     ┌───────────────┐    consume    ┌───────────────┐
 │               │                │               │                │               │
 │     Sensor    ├───────────────►│  sensor.raw   ├───────────────►│    Anomaly    │
-│    Producer   │   Avro msgs    │    (topic)    │                │    Detector   │
+│    Producer   │   JSON msgs    │    (topic)    │                │    Detector   │
 │               │                │               │                │               │
 └───────────────┘                └───────────────┘                └───────┬───────┘
                                          │                                │
@@ -43,7 +43,7 @@ A complete, runnable Go project that simulates an IoT environment using Apache K
 
 ## Features
 
-- 1,000 virtual sensor devices (temperature & humidity) publish Avro-encoded messages every 2s to topic **sensor.raw**
+- 1,000 virtual sensor devices (temperature & humidity) publish JSON-encoded messages every 2s to topic **sensor.raw**
 - Kafka Streams service **anomaly-detector** reads **sensor.raw**, flags out-of-range values (> 50°C or RH < 10%), and writes alert events to **sensor.alert**
 - Kafka Connect sinks:
   - **PostgreSQL** (table `sensor_readings`) for raw data
@@ -186,7 +186,7 @@ Access the MinIO console at http://localhost:9001 (minioadmin/minioadmin) to bro
 │   ├── sensor-producer/       # generates mock data
 │   └── anomaly-detector/      # Kafka Streams app
 ├── internal/
-│   ├── model/                 # Avro schemas (*.avsc) + Go structs
+│   ├── model/                 # JSON models + Go structs
 │   ├── kafka/                 # common producer/consumer helpers
 │   ├── metrics/               # Prometheus collectors
 │   └── config/                # env config loader
@@ -196,9 +196,69 @@ Access the MinIO console at http://localhost:9001 (minioadmin/minioadmin) to bro
 ├── scripts/
 │   ├── load-test.sh           # spin 5k msg/s for stress
 │   └── simulate-dlt.sh        # publish broken messages
+├── .github/
+│   └── workflows/             # GitHub Actions CI/CD workflows
 ├── README.md                  # architecture diagram & how-to-run
 └── Makefile                   # make run-producer / make test / make load
 ```
+
+## CI/CD with GitHub Actions
+
+This project uses GitHub Actions for continuous integration and delivery:
+
+### CI Pipeline
+
+The CI pipeline runs on every push to the main branch and on pull requests:
+
+- Sets up Go 1.22
+- Verifies dependencies
+- Builds the application
+- Runs tests
+- Uploads build artifacts
+
+### Code Quality
+
+The linting workflow runs on every push to the main branch and on pull requests:
+
+- Sets up Go 1.22
+- Runs golangci-lint to check code quality
+- Ensures code follows best practices and standards
+
+### Security Scanning
+
+The CodeQL security scanning workflow:
+
+- Runs on pushes to main, pull requests, and on a weekly schedule
+- Performs semantic code analysis to find security vulnerabilities
+- Supports Go language analysis
+- Reports findings in the GitHub Security tab
+
+### Docker Publishing
+
+The Docker publishing workflow:
+
+- Runs on pushes to the main branch and when tags starting with 'v' are pushed
+- Builds Docker images for both the sensor-producer and anomaly-detector
+- Pushes images to GitHub Container Registry (ghcr.io)
+- Tags images based on:
+  - Semantic version (for tags like v1.0.0)
+  - Branch name (for branch pushes)
+  - Short SHA (for all pushes)
+  - Latest (for main branch)
+
+### Using the Docker Images
+
+Once published, you can pull the images from GitHub Container Registry:
+
+```bash
+# Pull the sensor producer image
+docker pull ghcr.io/example/iot-sensor-fleet/sensor-producer:latest
+
+# Pull the anomaly detector image
+docker pull ghcr.io/example/iot-sensor-fleet/anomaly-detector:latest
+```
+
+Replace `example/iot-sensor-fleet` with your actual GitHub repository path.
 
 ## Testing
 

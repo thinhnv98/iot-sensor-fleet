@@ -33,13 +33,6 @@ WORKDIR /app
 # Copy the binary from the builder stage
 COPY --from=builder /app/bin/sensor-producer .
 
-# Create directory structure for schema files
-RUN mkdir -p internal/model
-
-# Copy schema files to the exact location expected by the code
-COPY --from=builder /app/internal/model/sensor_reading.avsc internal/model/sensor_reading.avsc
-COPY --from=builder /app/internal/model/sensor_alert.avsc internal/model/sensor_alert.avsc
-
 # Expose metrics port
 EXPOSE 2112
 
@@ -57,13 +50,6 @@ WORKDIR /app
 
 # Copy the binary from the builder stage
 COPY --from=builder /app/bin/anomaly-detector .
-
-# Create directory structure for schema files
-RUN mkdir -p internal/model
-
-# Copy schema files to the exact location expected by the code
-COPY --from=builder /app/internal/model/sensor_reading.avsc internal/model/sensor_reading.avsc
-COPY --from=builder /app/internal/model/sensor_alert.avsc internal/model/sensor_alert.avsc
 
 # Expose metrics port
 EXPOSE 2113
