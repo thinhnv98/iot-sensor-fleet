@@ -26,7 +26,7 @@ DOCKER_COMPOSE=docker/docker-compose.yml
 
 all: build
 
-build: 
+build:
 	mkdir -p $(BUILD_DIR)
 	$(GOBUILD) -o $(BUILD_DIR)/$(PRODUCER_BIN) $(PRODUCER_SRC)
 	$(GOBUILD) -o $(BUILD_DIR)/$(DETECTOR_BIN) $(DETECTOR_SRC)

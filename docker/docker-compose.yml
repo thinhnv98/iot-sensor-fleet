@@ -207,6 +207,7 @@ services:
       POSTGRES_DB: sensordb
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./postgres/initdb:/docker-entrypoint-initdb.d
     healthcheck:
       test: pg_isready -U postgres -d sensordb
       interval: 10s
@@ -267,6 +268,9 @@ services:
       /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin;
       /usr/bin/mc mb myminio/sensor-cold || echo 'Bucket already exists';
       "
+
+  # Database Setup is now handled by initdb.sql in the postgres service
+  # db-setup service has been removed in favor of using PostgreSQL's built-in initialization
 
   # Prometheus
   prometheus:
@@ -348,15 +352,17 @@ services:
         condition: service_healthy
       schema-registry:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    env_file: ../.env
     environment:
       KAFKA_BROKERS: kafka:29092
       SCHEMA_REGISTRY_URL: http://schema-registry:8081
-      TOPIC_SENSOR_RAW: sensor.raw
-      TOPIC_SENSOR_ALERT: sensor.alert
-      TOPIC_SENSOR_RAW_DLT: sensor.raw.dlt
-      SENSOR_COUNT: 100
-      SENSOR_INTERVAL: 2s
-      METRICS_PORT: 2112
+      POSTGRES_HOST: postgres
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      MINIO_ENDPOINT: minio:9000
     ports:
       - "2112:2112"
     healthcheck:
@@ -380,16 +386,18 @@ services:
         condition: service_healthy
       sensor-producer:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    env_file: ../.env
     environment:
       KAFKA_BROKERS: kafka:29092
       SCHEMA_REGISTRY_URL: http://schema-registry:8081
-      TOPIC_SENSOR_RAW: sensor.raw
-      TOPIC_SENSOR_ALERT: sensor.alert
-      TOPIC_SENSOR_RAW_DLT: sensor.raw.dlt
-      CONSUMER_GROUP_ID: iot-sensor-group
+      POSTGRES_HOST: postgres
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      MINIO_ENDPOINT: minio:9000
       METRICS_PORT: 2113
-      MAX_TEMPERATURE: 50.0
-      MIN_HUMIDITY: 10.0
     ports:
       - "2113:2113"
     healthcheck:

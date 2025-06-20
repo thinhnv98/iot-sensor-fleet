@@ -25,7 +25,10 @@ go.work
 .vscode/
 *.swp
 *.swo
+go.sum
 
 # OS specific files
 .DS_Store
 Thumbs.db
+vendor
+/vendor/

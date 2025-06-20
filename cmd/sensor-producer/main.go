@@ -13,6 +13,7 @@ import (
 
 	"github.com/IBM/sarama"
 	"github.com/example/iot-sensor-fleet/internal/config"
+	"github.com/example/iot-sensor-fleet/internal/db"
 	"github.com/example/iot-sensor-fleet/internal/kafka"
 	"github.com/example/iot-sensor-fleet/internal/metrics"
 	"github.com/example/iot-sensor-fleet/internal/model"
@@ -110,6 +111,13 @@ func main() {
 
 	// Initialize Schema Registry client
 	model.InitSchemaRegistry(cfg.SchemaRegistryURL)
+
+	// Initialize databases (PostgreSQL and Elasticsearch)
+	log.Println("Initializing databases...")
+	if err := db.InitDatabases(cfg); err != nil {
+		log.Printf("Warning: Failed to initialize databases: %v", err)
+		// Continue execution even if database initialization fails
+	}
 
 	// Create metrics server
 	metricsServer := metrics.NewMetricsServer(cfg.MetricsPort)
