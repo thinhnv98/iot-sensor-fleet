@@ -1,0 +1,12 @@
+{
+  "type": "record",
+  "name": "SensorAlert",
+  "namespace": "com.example.iot",
+  "fields": [
+    {"name": "sensor_id", "type": "string"},
+    {"name": "ts", "type": "long"},
+    {"name": "reason", "type": "string"},
+    {"name": "temperature", "type": "float"},
+    {"name": "humidity", "type": "float"}
+  ]
+}
