@@ -249,17 +249,11 @@ func NewConsumer(config ConsumerConfig, handler MessageHandler) (*Consumer, erro
 	// We need to adapt the handler function to match the expected signature
 	adaptedHandler := func(ctx context.Context, message *sarama.ConsumerMessage) error {
 		startTime := time.Now()
-
-		// Update metrics before processing
 		if config.Metrics != nil {
 			config.Metrics.MessagesReceived.Inc()
 			config.Metrics.BytesReceived.Add(float64(len(message.Value)))
 		}
-
-		// Call the original handler
 		err := handler(message)
-
-		// Update metrics after processing
 		if config.Metrics != nil {
 			config.Metrics.ProcessingTime.Observe(time.Since(startTime).Seconds())
 			if err != nil {
@@ -287,7 +281,6 @@ func NewConsumer(config ConsumerConfig, handler MessageHandler) (*Consumer, erro
 		opts = append(opts, WithConsumerGroupRebalanceStrategy(strategy))
 	}
 
-	// Since the original consumer only supports a single topic, we'll use the first one
 	topic := ""
 	if len(config.Topics) > 0 {
 		topic = config.Topics[0]

@@ -85,7 +85,7 @@ func (s *Sensor) Stop() {
 // generateReading generates a random sensor reading
 func (s *Sensor) generateReading() *model.SensorReading {
 	// Generate random temperature between 10°C and 60°C
-	// This will occasionally generate anomalies (>50°C)
+	// This will occasionally generate anomalies (>50°C)+
 	temperature := 10.0 + rand.Float32()*50.0
 
 	// Generate random humidity between 5% and 95%

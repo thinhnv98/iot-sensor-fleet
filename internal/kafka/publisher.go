@@ -26,14 +26,10 @@ type kafkaPublisher struct {
 // NewKafkaPublisher creates a new Kafka publisher
 func NewKafkaPublisher(brokers []string, topic string, opts ...OptionFunc) (IPublisher, error) {
 	config := sarama.NewConfig()
-
-	// Set default values
 	config.Producer.RequiredAcks = sarama.RequiredAcks(DefaultRequiredAcks)
 	config.Producer.Return.Successes = DefaultProducerReturnSucc
 	config.Producer.Retry.Max = DefaultRetryMax
 	config.Producer.Retry.Backoff = time.Duration(DefaultRetryBackoff) * time.Millisecond
-
-	// Apply options
 	for _, o := range opts {
 		o(config)
 	}
@@ -54,7 +50,6 @@ func NewKafkaPublisher(brokers []string, topic string, opts ...OptionFunc) (IPub
 
 // Publish sends a message to Kafka with retry logic
 func (p *kafkaPublisher) Publish(ctx context.Context, key, value []byte) error {
-	// Create producer message with default topic and provided key and value
 	msg := &sarama.ProducerMessage{
 		Topic: p.topic,
 		Key:   sarama.ByteEncoder(key),
@@ -80,23 +75,16 @@ func (p *kafkaPublisher) Publish(ctx context.Context, key, value []byte) error {
 			}
 
 			lastErr = err
-
-			// Check if we've exceeded the deadline
 			if time.Now().After(deadline) {
 				break
 			}
 
-			// Calculate backoff time (exponential with jitter)
 			backoffTime := time.Duration(100*(1<<i)) * time.Millisecond
-			// Add some jitter (±20%)
 			jitter := time.Duration(float64(backoffTime) * (0.8 + 0.4*rand.Float64()))
-
-			// Wait before retrying
 			select {
 			case <-ctx.Done():
 				return ctx.Err()
 			case <-time.After(jitter):
-				// Continue with next retry
 			}
 		}
 	}
