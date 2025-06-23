@@ -21,13 +21,13 @@ func InitDatabases(cfg *config.Config) (*PostgresDB, error) {
 		return nil, err
 	}
 
-	// Initialize Elasticsearch
-	log.Println("Initializing Elasticsearch...")
-	elasticsearch := NewElasticsearchDB(cfg)
-	if err := elasticsearch.InitIndex(); err != nil {
-		postgres.Close()
-		return nil, err
-	}
+	//// Initialize Elasticsearch
+	//log.Println("Initializing Elasticsearch...")
+	//elasticsearch := NewElasticsearchDB(cfg)
+	//if err := elasticsearch.InitIndex(); err != nil {
+	//	postgres.Close()
+	//	return nil, err
+	//}
 
 	log.Println("All databases initialized successfully")
 	return postgres, nil

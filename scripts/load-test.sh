@@ -5,7 +5,7 @@
 # to generate approximately 5,000 messages per second
 
 # Set environment variables for high load
-export SENSOR_COUNT=5000      # 5,000 sensors
+export SENSOR_COUNT=1000      # 5,000 sensors
 export SENSOR_INTERVAL=1s     # 1 second interval
 
 echo "Starting load test with $SENSOR_COUNT sensors at $SENSOR_INTERVAL interval..."

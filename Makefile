@@ -67,7 +67,7 @@ docker-build:
 		docker compose -f $(DOCKER_COMPOSE) build sensor-producer anomaly-detector; \
 	else \
 		echo "Using docker-compose..."; \
-		docker-compose -f $(DOCKER_COMPOSE) build sensor-producer anomaly-detector; \
+		docker compose -f $(DOCKER_COMPOSE) build sensor-producer anomaly-detector; \
 	fi
 
 docker-logs:
@@ -96,3 +96,6 @@ tidy:
 # Ensure scripts are executable
 scripts-executable:
 	chmod +x ./scripts/*.sh
+
+clear:
+	docker compose -f $(DOCKER_COMPOSE) down -v
