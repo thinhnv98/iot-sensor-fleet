@@ -43,7 +43,7 @@ run-producer:
 run-detector:
 	$(GORUN) $(DETECTOR_SRC)/main.go
 
-docker-up:
+up:
 	@if command -v docker compose >/dev/null 2>&1; then \
 		echo "Using docker compose..."; \
 		docker compose -f $(DOCKER_COMPOSE) up -d; \
@@ -52,7 +52,7 @@ docker-up:
 		docker-compose -f $(DOCKER_COMPOSE) up -d; \
 	fi
 
-docker-down:
+down:
 	@if command -v docker compose >/dev/null 2>&1; then \
 		echo "Using docker compose..."; \
 		docker compose -f $(DOCKER_COMPOSE) down; \

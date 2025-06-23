@@ -126,7 +126,8 @@ services:
             "auto.create": "true",
             "auto.evolve": "true",
             "insert.mode": "insert",
-            "pk.mode": "none",
+            "pk.mode": "record_key",
+            "pk.fields": "id",
             "table.name.format": "sensor_readings",
             "key.converter": "org.apache.kafka.connect.storage.StringConverter",
             "value.converter": "org.apache.kafka.connect.json.JsonConverter",
@@ -229,7 +230,7 @@ services:
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
     healthcheck:
-      test: curl -s http://elasticsearch:9200/_cluster/health | grep -q '"status":"green"'
+      test: curl -s http://elasticsearch:9200/_cluster/health | grep -q '"status":"yellow"'
       interval: 30s
       timeout: 10s
       retries: 5

@@ -124,7 +124,7 @@ func main() {
 
 	// Initialize databases (PostgreSQL and Elasticsearch)
 	log.Println("Initializing databases...")
-	if err := db.InitDatabases(cfg); err != nil {
+	if _, err := db.InitDatabases(cfg); err != nil {
 		log.Printf("Warning: Failed to initialize databases: %v", err)
 		// Continue execution even if database initialization fails
 	}
